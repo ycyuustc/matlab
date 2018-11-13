@@ -19,8 +19,13 @@ Num = 6;
 
 v_initial = -(Num-1):2:(Num-1);
 
-vx = v_initial*0.05;
-vx(1) = -2.0;
+% vx = v_initial*0.05;
+vx(1) = -3;
+vx(2) = -1.5;
+vx(3) = -0.25;
+vx(4) = 0;
+vx(5) = 0.25;
+vx(6) = 1.5;
 
 x1 = vx(1);
 x2 = vx(2);
@@ -55,6 +60,10 @@ while 1
 %     end
 
     disp(sum(jm));
+    
+    if max(sum(jm))>2
+        disp('hehe');
+    end
     
     [lhs,fm] = fn_force_matrix(vx,Num);
     lhs = lhs + betah;
