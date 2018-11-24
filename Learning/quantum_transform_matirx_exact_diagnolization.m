@@ -3,7 +3,7 @@
 %   1D XXX spin chain under exactly diagonalization 
 %   method. The input "beta" presents the inverse 
 %   temperature in the partition function. 
-%   
+%   copyright by ycyu@wipm.ac.cn
 
 m2id=eye(2);
 m2z=[1,0;0,-1];
@@ -20,12 +20,12 @@ m4p(1,2,2,1)=1;
 m4p(2,1,1,2)=1;
 m4p(2,2,2,2)=1;
 
-beta = 0.4;
+beta = 0.01;
 
 %%%%%%%%%%%%
 %  to generate the exact hamiltonian
 %%%%%%%%%%%%
-Num_site = 4;
+Num_site = 2;
 hamiltonian = fn_exchange(Num_site,1,Num_site);
 for k=1:Num_site-1
     
@@ -44,6 +44,10 @@ Z = trace(tm2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   begin to calculate the maxium eigenvalue
+
+v_x = 2:2:12;
+v_Z_exact = zeros(1,6);
+v_Z_estimate = zeros(1,6);
 
 for Num = 2:2:12
     
@@ -88,10 +92,16 @@ for Num = 2:2:12
         [1:2:(num-1),2:2:num]);   
     tm = reshape(transform_matrix,2^Num,2^Num);    
     tv = real(eig(tm)); 
+    disp('=======================');
     disp(['Num=',num2str(Num),'  max eigen=', num2str(max(tv))]);
+    tv = sort(tv);
+    disp(['v1/v2 = ',num2str(tv(end)/tv(end-1))]);
+    v_Z_estimate(Num/2) = max(tv)^Num_site;
     
     tm = tm^Num_site;  
     Z2 = trace(tm);  
+    v_Z_exact(Num/2) = Z2;
+    
     max_eigen = max(tv);
     
     disp(['Num=',num2str(Num),'  Z=', num2str(Z),...
@@ -99,14 +109,15 @@ for Num = 2:2:12
     
 end
 
-
 %%%%%%%  TEST CODE HEAR  %%%%%%%%%%%%
 % tm = fn_exchange(4,3,1);
 % tm2 = reshape(permute(tm,[4,3,2,1,8,7,6,5]),16,16);
 % disp(tm2);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%  The functions for the scripts  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%% End the script %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%  Functions for the scripts  %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function result = fn_identity(number)
 
