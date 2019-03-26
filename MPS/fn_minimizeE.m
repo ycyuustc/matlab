@@ -1,8 +1,8 @@
 function [E,mps]=fn_minimizeE(hset,D,precision)
 
 [M,N]=size(hset);
-% d=size(hset{1,1},1);
-d=2;
+d=size(hset{1,1},2);
+
 mps=fn_createrandommps(N,D,d);
 mps=fn_prepare_mps(mps);
 
@@ -25,9 +25,9 @@ while 1
        
        mps{j}=A;
        Evalues(ind_E)=E;
-       
-       disp(E);
-       
+%        
+%        disp(E);
+%        
        ind_E=ind_E+1;
        
        for m=1:M
@@ -57,7 +57,7 @@ while 1
        end
    end
    
-   disp(reshape(Evalues,[1,2*N-2]));
+   disp(reshape(Evalues,[2*N-2,1]));
 %    pause(0.2);
    
    if std(Evalues)/abs(mean(Evalues))<precision

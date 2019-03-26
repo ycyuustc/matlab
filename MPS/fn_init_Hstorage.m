@@ -1,6 +1,7 @@
 function [Hstorage]=fn_init_Hstorage(mps,hset)
 
-d=size(hset{1,1},1);
+d=size(hset{1,1},2);
+% d=2;
 [M,N]=size(hset);
 Hstorage=cell(M,N+1);
 

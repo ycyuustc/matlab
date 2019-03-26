@@ -1,0 +1,33 @@
+function [res_cell,res_matrix] = fn_generate_QTM_mps(tau,lambda,Num)
+
+b = @(lambda) 1j/(lambda+1j);
+c = @(lambda) lambda/
+
+m2id=eye(2);
+m2z=[1,0;0,-1];
+dT = 2;
+
+m4id=zeros(2,2,2,2);
+m4id(1,1,1,1)=1;
+m4id(1,2,1,2)=1;
+m4id(2,1,2,1)=1;
+m4id(2,2,2,2)=1;
+
+m4p=zeros(2,2,2,2);
+m4p(1,1,1,1)=1;
+m4p(1,2,2,1)=1;
+m4p(2,1,1,2)=1;
+m4p(2,2,2,2)=1;
+
+m4p2 = permute(m4p,[1,4,3,2]);
+
+lambda_1 = tau + lambda;
+lambda_2 = tau - lambda;
+
+p1 = 1/(1-lambda);
+            p2 = lambda/(lambda-1);
+            
+            T1 = p1*m4p + p2*m4id;
+            T2 = p1*m4p2 + p2*m4id;
+
+end

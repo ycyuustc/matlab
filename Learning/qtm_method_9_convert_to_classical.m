@@ -1,0 +1,202 @@
+% N*M size square lattice
+M = 2; % y direction, or temperature direction
+N = 3; % x direction  or site direction
+
+m4id=zeros(2,2,2,2);
+m4id(1,1,1,1)=1;
+m4id(1,2,1,2)=1;
+m4id(2,1,2,1)=1;
+m4id(2,2,2,2)=1;
+
+m4p=zeros(2,2,2,2);
+m4p(1,1,1,1)=1;
+m4p(1,2,2,1)=1;
+m4p(2,1,1,2)=1;
+m4p(2,2,2,2)=1;
+
+m4p2 = permute(m4p,[1,4,3,2]);
+
+B = rand();
+beta = -0.1; % minus temperature
+lambda = beta/M;
+b = 1/(1-lambda); % abs(b) on the permutation tensor
+c = -lambda/(1-lambda);  % abs(c) on the identity tensor
+logb = log(b);
+logc = log(abs(c));
+
+m4id = abs(c)*m4id;
+m4p = abs(b)*m4p;
+m4p2 = abs(b)*m4p2;
+
+ct = cell(1,3);
+ct{1} = m4p2;
+ct{2} = m4id;
+ct{3} = m4p;
+
+v_potential = [abs(c),abs(b)];
+
+m_sign = diag((mod(1:M,2)*2-1)) * ones(M,N);
+% m_configuration = ones(M,N);
+m_configuration = floor(rand(M,N)*2);
+
+
+
+
+m_op = m_configuration.*m_sign;
+c1 = ct{m_op(1,1)+2};
+c2 = ct{m_op(1,2)+2};
+c3 = ct{m_op(1,3)+2};
+c4 = ct{m_op(2,1)+2};
+c5 = ct{m_op(2,2)+2};
+c6 = ct{m_op(2,3)+2};
+c7 = expm([1,0;0,-1]*B);
+
+res1 = ncon({c1,c2,c3,c4,c5,c6,c7,c7,c7},{[1,7,2,8],[2,10,3,11],[3,13,1,14],...
+    [4,8,5,9],[5,11,6,12],[6,14,4,15],[9,7],[12,10],[15,13]});
+
+%% test code
+% m_op = floor(rand(M,N)*3)-1;
+% disp(m_op);
+% 
+% x = floor(rand()*N)+1;
+% y = floor(rand()*M)+1;
+% 
+% disp([x,y]);
+% m_op(y,x) = 1;
+% [tn,tv] = circle_one_point(x,y,m_op);
+% disp(tn);
+% disp(tv);
+% m_op(y,x) = 0;
+% [tn,tv] = circle_one_point(x,y,m_op);
+% disp(tn);
+% disp(tv);
+% m_op(y,x) = -1;
+% [tn,tv] = circle_one_point(x,y,m_op);
+% disp(tn);
+% disp(tv);
+% 
+% B = 1;
+% disp(fn_factor(x,y,m_op,B));
+%%
+
+while 1
+    x1 = floor(rand()*N)+1;
+    y1 = floor(rand()*M)+1;
+    x2 = floor(rand()*N)+1;
+    y2 = floor(rand()*M)+1;
+if x1~=x2 || y1~=y2
+    break;
+end
+end
+
+state1 = m_configuration(y1,x1);
+state2 = m_configuration(y2,x2);
+if state1 == 1 && state2 == 1
+    flip_factor_1 = (c/b)^2;
+elseif state1 == 0 && state2 == 0
+    flip_factor_1 = (b/c)^2;
+else
+    flip_factor_1 = 1;
+end
+
+m_configuration_1 = m_configuration;
+m_configuration_1(y1,x1) = 1 - m_configuration_1(y1,x1);
+factor_0 = fn_factor(x1,y1,m_configuration.*m_sign,B);
+factor_1 = fn_factor(x1,y1,m_configuration_1.*m_sign,B);
+factor_0_to_1 = factor_1/factor_0;
+
+m_configuration_2 = m_configuration_1;
+m_configuration_2(y2,x2) = 1 - m_configuration(y2,x2);
+factor_1 = fn_factor(x2,y2,m_configuration_1.*m_sign,B);
+factor_2 = fn_factor(x2,y2,m_configuration_2.*m_sign,B);
+factor_1_to_2 = factor_2/factor_1;
+
+flip_factor = flip_factor_1*factor_1_to_2*factor_0_to_1;
+disp(flip_factor);
+
+m_configuration_3 = m_configuration;
+m_configuration_3(y1,x1) = 1 - m_configuration_3(y1,x1);
+m_configuration_3(y2,x2) = 1 - m_configuration_3(y2,x2);
+
+m_op = m_configuration_3.*m_sign;
+
+c1 = ct{m_op(1,1)+2};
+c2 = ct{m_op(1,2)+2};
+c3 = ct{m_op(1,3)+2};
+c4 = ct{m_op(2,1)+2};
+c5 = ct{m_op(2,2)+2};
+c6 = ct{m_op(2,3)+2};
+c7 = expm([1,0;0,-1]*B);
+
+res2 = ncon({c1,c2,c3,c4,c5,c6,c7,c7,c7},{[1,7,2,8],[2,10,3,11],[3,13,1,14],...
+    [4,8,5,9],[5,11,6,12],[6,14,4,15],[9,7],[12,10],[15,13]});
+
+disp(res2/res1);
+disp(flip_factor);
+
+function res = fn_factor(x,y,m_op,B)
+    [num_circle,v_pearl] = circle_one_point(x,y,m_op);
+    if num_circle == 2
+        res = 2*cosh(B*v_pearl(1))*2*cosh(B*v_pearl(2));
+    else
+        res = 2*cosh(B*v_pearl(1));
+    end
+end
+
+function [num_circle,v_pearl] = circle_one_point(x,y,m_op)
+[M,N] = size(m_op);
+m_swerve = [2,1,4,3;1,2,3,4;4,3,2,1];
+v_delta_x = [1,0,-1,0];
+v_delta_y = [0,-1,0,1];
+
+x_ori = x; y_ori = y;
+direction_ori = 1;
+op = m_op(y,x);
+
+v_backward = [3,4,1,2];
+direction_next = v_backward(m_swerve(op+2,direction_ori));
+
+direction = 1;
+which_circle = 1;
+v_pearl = zeros(1,2);
+break_flag = 0;
+while 1
+    if direction == 2 && y == M
+        v_pearl(which_circle) = v_pearl(which_circle) + 1;
+    end
+    if direction == 4 && y == 1
+        v_pearl(which_circle) = v_pearl(which_circle) + 1;
+    end
+    
+    % update the leg, which is discribed by [x,y,direction]. 
+    op = m_op(y,x);
+    direction = m_swerve(op+2,direction); % update direction
+    dx = v_delta_x(direction);
+    dy = v_delta_y(direction);
+    x = mod(x+dx-1,N)+1; % update x
+    y = mod(y+dy-1,M)+1; % update y
+      
+    %  finished the update. now [x,y,direction] is the new leg.
+    if x == x_ori && y == y_ori  % if go back to the original point
+        if direction == direction_ori
+            if break_flag == 1
+                break;
+            else
+                direction_ori = ...
+                    find((1:4)~=direction_ori&(1:4)~=direction_next,1);
+                direction = direction_ori;
+                which_circle = 2;
+                break_flag = 1;
+            end
+        else
+            break_flag = 1;
+        end
+    end
+    
+end  % end circle running
+num_circle = which_circle;
+
+end
+
+
+

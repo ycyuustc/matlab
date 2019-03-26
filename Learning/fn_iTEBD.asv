@@ -1,0 +1,56 @@
+function mps = fn_iTEBD(mps,h12,delta,num_walk,)
+
+close(figure(258));
+figure(258);
+hold on;
+
+ts = size(h12);
+mh12 = reshape(h12,ts(1)*ts(2),ts(3)*ts(4));
+mhamil = expm(-delta*mh12);
+hamil = reshape(mhamil,ts);
+
+TA = mps{1};
+sAB = mps{2};
+TB = mps{3};
+sBA = mps{4};
+
+for kkk = 1:num_walk
+    
+   % update A-B
+    TATB = ncon({TA,sAB,TB},{[-1,1,-2],[1,2],[2,-3,-4]});
+    TATB = ncon({TATB,hamil},{[-1,1,-3,2],[-2,-4,1,2]});
+    ts = size(TATB);
+    matrix = reshape(TATB,ts(1)*ts(2),ts(3)*ts(4));
+    [u,s,v] = svd(matrix,'econ'); v = v';
+    truncate_D = min(D,length(diag(s)));
+    mA = u(:,1:truncate_D);
+    mS = s(1:truncate_D,1:truncate_D);
+    mB = v(1:truncate_D,:);
+    TA = reshape(mA,[ts(1),ts(2),truncate_D]);
+    TA = permute(TA,[1,3,2]);
+    TB = reshape(mB,[truncate_D,ts(3),ts(4)]);
+    sAB = mS;
+    sAB = sAB/norm(diag(sAB));
+    % finished updating A-B
+    
+    % update B-A
+    TBTA = ncon({TB,sBA,TA},{[-1,1,-2],[1,2],[2,-3,-4]});
+    TBTA = ncon({TBTA,hamil},{[-1,1,-3,2],[-2,-4,1,2]});
+    ts = size(TBTA);
+    matrix = reshape(TBTA,ts(1)*ts(2),ts(3)*ts(4));
+    [u,s,v] = svd(matrix,'econ'); v = v';
+    truncate_D = min(D,length(diag(s)));
+    mA = u(:,1:truncate_D);
+    mS = s(1:truncate_D,1:truncate_D);
+    mB = v(1:truncate_D,:);
+    TB = reshape(mA,[ts(1),ts(2),truncate_D]);
+    TB = permute(TB,[1,3,2]);
+    TA = reshape(mB,[truncate_D,ts(3),ts(4)]);
+    sBA = mS;
+    sBA = sBA/norm(diag(sBA));
+    % finished updating B-A
+    
+end
+
+
+end

@@ -1,0 +1,229 @@
+% mu0 = 1.55907;
+% c0 = 1.0;
+% T0 = 1.0;
+% tv = lieb_ep_ins(mu0/c0^2,T0/c0^2);
+% 
+% n0 = tv(2);
+% s0 = tv(4);
+% 
+% v_mu = zeros(1,100);
+% v_T = zeros(1,100);
+% mu = mu0;
+% T = T0;
+% 
+% vc = linspace(1.0,10,100);
+% for ic = 1:100
+%     
+%    c = vc(ic);
+%    disp(fn_judge(mu,T,c,n0,s0));
+%    [mu,T] = fn_find(mu,T,c,n0,s0);
+%    disp(fn_judge(mu,T,c,n0,s0));
+%    v_mu(ic) = mu;
+%    v_T(ic) = T;
+%    disp(ic);
+%     
+% end
+
+
+% vc2 = vc(end)*ones(1,100);
+% v_mu2 = zeros(1,100);
+% v_T2 = linspace(v_T(end),1.6,100);
+% 
+% mu = v_mu(end);
+% for iT = 1:100
+%     c = vc2(iT);
+%     T = v_T2(iT);
+%     disp(fn_judge2(mu,T,c,n0));
+%     mu = fn_find2(mu,T,c,n0);
+%     disp(fn_judge2(mu,T,c,n0));
+%     v_mu2(iT) = mu;
+%     disp(iT);
+%     disp([mu,T,c]);
+% end
+
+
+% vc3 = vc(end:-1:1);
+% v_mu3 = zeros(1,100);
+% v_T3 = zeros(1,100);
+% mu = v_mu2(end);
+% T = v_T2(end);
+% c = vc2(end);
+% tv = c*lieb_ep_ins(mu/c^2,T/c^2);
+% s0 = tv(4);
+% 
+% for ic = 1:100
+%     
+%    c = vc3(ic);
+%    disp(fn_judge(mu,T,c,n0,s0));
+%    [mu,T] = fn_find(mu,T,c,n0,s0);
+%    disp(fn_judge(mu,T,c,n0,s0));
+%    v_mu3(ic) = mu;
+%    v_T3(ic) = T;
+%    disp(ic);
+%    disp([mu,T,c]);
+%     
+% end
+
+
+% vc4 = vc3(end)*ones(1,100);
+% v_mu4 = zeros(1,100);
+% v_T4 = linspace(v_T3(end),1.0,100);
+% 
+% mu = v_mu3(end);
+% for iT = 1:100
+%     
+%    c = vc4(iT);
+%    T = v_T4(iT);
+%    disp(fn_judge2(mu,T,c,n0));
+%    mu = fn_find2(mu,T,c,n0);
+%    disp(fn_judge2(mu,T,c,n0));
+%    v_mu4(iT) = mu;
+%    disp(iT);
+%    disp([mu,T,c]);
+%     
+% end
+
+
+% vs = zeros(1,100);
+% vs2 = zeros(1,100);
+% vs3 = zeros(1,100);
+% vs4 = zeros(1,100);
+% for i=1:100
+%     
+%     c = vc(i);
+%     mu = v_mu(i);
+%     T = v_T(i);
+%     tv = c*lieb_ep_ins(mu/c^2,T/c^2);
+%     vs(i) = tv(4);
+%     
+%     c = vc2(i);
+%     mu = v_mu2(i);
+%     T = v_T2(i);
+%     tv = c*lieb_ep_ins(mu/c^2,T/c^2);
+%     vs2(i) = tv(4);
+%     
+%     c = vc3(i);
+%     mu = v_mu3(i);
+%     T = v_T3(i);
+%     tv = c*lieb_ep_ins(mu/c^2,T/c^2);
+%     vs3(i) = tv(4);
+%     
+%     c = vc4(i);
+%     mu = v_mu4(i);
+%     T = v_T4(i);
+%     tv = c*lieb_ep_ins(mu/c^2,T/c^2);
+%     vs4(i) = tv(4);
+%     
+% end
+
+
+close(figure(1));
+figure(1);
+hold on;
+plot(vc,v_T,'b');
+plot(vc2,v_T2,'b');
+plot(vc3,v_T3,'b');
+plot(vc4,v_T4,'b');
+axis([0,11.5,0.5,2.5]);
+
+close(figure(2));
+figure(2);
+hold on;
+plot(vs,v_T,'r');
+plot(vs2,v_T2,'r');
+plot(vs3,v_T3,'r');
+plot(vs4,v_T4,'r');
+axis([0.38,0.57,0.5,2.5]);
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%  functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+% search mu for given c,T,n
+function mu = fn_find2(mu0,T0,c0,n0)
+
+mu = mu0;
+delta = 0.1;
+
+while delta>1e-6
+   
+    v_mu = [mu-delta,mu,mu+delta];
+    v_r = zeros(1,3);
+    
+    for i_mu = 1:3
+       tmu = v_mu(i_mu);
+       v_r(i_mu) = fn_judge2(tmu,T0,c0,n0);
+    end
+    
+    [ind_mu] = find(v_r==min(v_r));
+    mu = v_mu(ind_mu);
+    if ind_mu ==2
+       delta = delta/2; 
+    end
+    
+end
+
+end
+
+% search mu, T for given n, s, c
+function [mu,T] = fn_find(mu0,T0,c0,n0,s0)
+
+mu = mu0;
+T = T0;
+
+delta = 0.1;
+
+while delta>1e-6
+  
+    v_mu = [mu-delta,mu,mu+delta];
+    v_T = [T-delta,T,T+delta];
+    
+    m_r = zeros(3,3);
+    
+    for i_mu = 1:3
+        for i_T = 1:3
+            tmu = v_mu(i_mu);
+            tT = v_T(i_T);
+            m_r(i_mu,i_T) = fn_judge(tmu,tT,c0,n0,s0);
+        end
+    end
+    
+    [ind_mu,ind_T] = find(m_r==min(min(m_r)));
+    mu = v_mu(ind_mu);
+    T = v_T(ind_T);
+    if ind_mu == 2 && ind_T == 2
+        delta = delta/2;
+%         disp(delta);
+    end
+    
+end
+
+end
+
+function result = fn_judge(mu,T,c,n0,s0)
+
+tv = c*lieb_ep_ins(mu/c^2,T/c^2);
+n = tv(2);
+s = tv(4);
+
+result = sqrt((n-n0)^2+(s-s0)^2);
+
+end
+
+
+function result = fn_judge2(mu,T,c,n0)
+
+tv = c*lieb_ep_ins(mu/c^2,T/c^2);
+n = tv(2);
+
+
+result = abs(n-n0);
+
+end

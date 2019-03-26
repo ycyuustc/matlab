@@ -1,8 +1,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   This script is coded for calculate the QTM for 
-%   1D XXX spin chain under exactly diagonalization 
-%   method. The input "beta" presents the inverse 
-%   temperature in the partition function. 
+%   This script is coded for calculate the QTM for
+%   1D XXX spin chain under exactly diagonalization
+%   method. The input "beta" presents the inverse
+%   temperature in the partition function.
 %   copyright by ycyu@wipm.ac.cn
 
 m2id=eye(2);
@@ -20,92 +20,111 @@ m4p(1,2,2,1)=1;
 m4p(2,1,1,2)=1;
 m4p(2,2,2,2)=1;
 
-beta = 0.01;
 
-%%%%%%%%%%%%
-%  to generate the exact hamiltonian
-%%%%%%%%%%%%
-Num_site = 2;
-hamiltonian = fn_exchange(Num_site,1,Num_site);
-for k=1:Num_site-1
-    
-    add_on = fn_exchange(Num_site,k,k+1);
-    hamiltonian = hamiltonian + add_on;
-    
-end
+% v_beta = [0.1,0.2,0.3,0.4,0.5,0.6];
+% v_M = [2,4,6,8,10,12];
 
-identity = fn_identity(Num_site);
-identity = permute(identity,[1:2:(2*Num_site-1),2:2:(2*Num_site)]);
-hamiltonian = hamiltonian - Num_site*identity;
+v_beta = 0.1;
+v_M = 12;
 
-tm2 = reshape(hamiltonian,2^Num_site,2^Num_site);
-tm2 = exp(-beta*tm2);
-Z = trace(tm2);
+m_eig = zeros(length(v_N),length(v_beta));
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   begin to calculate the maxium eigenvalue
-
-v_x = 2:2:12;
-v_Z_exact = zeros(1,6);
-v_Z_estimate = zeros(1,6);
-
-for Num = 2:2:12
+for ibeta = 1:length(v_beta)
     
-    lambda = beta/Num;
+    beta = v_beta(ibeta);
     
-    T1 = 1/(1-lambda)*m4p + lambda/(lambda-1)*m4id;
-    T2 = permute(T1,[4,1,2,3]);
-    
-    T1 = permute(T1,[1,3,2,4]);
-    T2 = permute(T2,[1,3,2,4]);
-    
-    mpo = cell(1,Num);
-    
-    for i=1:Num
+    %%%%%%%%%%%%
+    %  to generate the exact hamiltonian
+    %%%%%%%%%%%%
+    Num_site = 12;
+    hamiltonian = fn_exchange(Num_site,1,Num_site);
+    for k=1:Num_site-1
         
-        if mod(i,2) == 0
-            mpo{i} = T1;
-        else
-            mpo{i} = T2;
+        add_on = fn_exchange(Num_site,k,k+1);
+        hamiltonian = hamiltonian + add_on;
+        
+    end
+    
+    identity = fn_identity(Num_site);
+    identity = permute(identity,[1:2:(2*Num_site-1),2:2:(2*Num_site)]);
+    hamiltonian = hamiltonian - Num_site*identity;
+    
+    tm2 = reshape(hamiltonian,2^Num_site,2^Num_site);
+    tm2 = expm(-beta*tm2);
+    Z = trace(tm2);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %   begin to calculate the maxium eigenvalue
+    
+    v_x = 2:2:12;
+    v_Z_exact = zeros(1,6);
+    v_Z_estimate = zeros(1,6);
+    
+    for iN = 1:length(v_N)
+        
+        Num = v_N(iN);
+        
+        lambda = beta/Num;
+        
+        T1 = 1/(1-lambda)*m4p + lambda/(lambda-1)*m4id;
+        T2 = permute(T1,[4,1,2,3]);
+        
+        T1 = permute(T1,[1,3,2,4]);
+        T2 = permute(T2,[1,3,2,4]);
+        
+        mpo = cell(1,Num);
+        
+        for i=1:Num
+            
+            if mod(i,2) == 0
+                mpo{i} = T1;
+            else
+                mpo{i} = T2;
+            end
+            
         end
         
-    end
-    
-    transform_matrix = T2;
-    num = 4;
-    for i=2:Num
+        transform_matrix = T2;
+        num = 4;
+        for i=2:Num
+            
+            append = mpo{i};
+            transform_matrix = fn_contract(transform_matrix,num,num,...
+                append,4,3);
+            tv = [1:(num-2),num,num+1,num-1,num+2];
+            transform_matrix = permute(transform_matrix,tv);
+            num = num+2;
+            
+        end
         
-        append = mpo{i};
-        transform_matrix = fn_contract(transform_matrix,num,num,...
-            append,4,3);
-        tv = [1:(num-2),num,num+1,num-1,num+2];
-        transform_matrix = permute(transform_matrix,tv);
-        num = num+2;
+        transform_matrix = fn_contract(transform_matrix,num,[num-1,num],...
+            eye(2),2,[1,2]);
+        num = num - 2;
+        
+        transform_matrix = permute(transform_matrix,...
+            [1:2:(num-1),2:2:num]);
+        tm = reshape(transform_matrix,2^Num,2^Num);
+        tv = real(eig(tm));
+        disp('=======================');
+        disp(['beta=',num2str(beta),'   Num=',num2str(Num),...
+            '  max eigen=', num2str(max(tv))]);
+        disp(['Z persite by exact diagonalization = ',...
+            num2str(power(Z,1/Num_site))]);
+        tv = sort(tv);
+        disp(['v1/v2 = ',num2str(tv(end)/tv(end-1))]);
+        v_Z_estimate(Num/2) = max(tv)^Num_site;
+        
+        tm = tm^Num_site;
+        Z2 = trace(tm);
+        v_Z_exact(Num/2) = Z2;
+        
+        max_eigen = max(tv);
+        m_eig(iN,ibeta) = max_eigen;
+        
+        disp(['Num=',num2str(Num),'  Z=', num2str(Z),...
+            '  Z2=',num2str(Z2), ' estimate=',num2str(max_eigen^Num_site)]);
         
     end
-    
-    transform_matrix = fn_contract(transform_matrix,num,[num-1,num],...
-        eye(2),2,[1,2]);
-    num = num - 2;
-    
-    transform_matrix = permute(transform_matrix,...
-        [1:2:(num-1),2:2:num]);   
-    tm = reshape(transform_matrix,2^Num,2^Num);    
-    tv = real(eig(tm)); 
-    disp('=======================');
-    disp(['Num=',num2str(Num),'  max eigen=', num2str(max(tv))]);
-    tv = sort(tv);
-    disp(['v1/v2 = ',num2str(tv(end)/tv(end-1))]);
-    v_Z_estimate(Num/2) = max(tv)^Num_site;
-    
-    tm = tm^Num_site;  
-    Z2 = trace(tm);  
-    v_Z_exact(Num/2) = Z2;
-    
-    max_eigen = max(tv);
-    
-    disp(['Num=',num2str(Num),'  Z=', num2str(Z),...
-         '  Z2=',num2str(Z2), ' estimate=',num2str(max_eigen^Num_site)]);
     
 end
 

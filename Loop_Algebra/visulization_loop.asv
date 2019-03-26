@@ -1,0 +1,175 @@
+% m_conf = ones(8,8);
+
+M = 10;
+N = 8;
+
+m_conf = diag(power(-1,0:(M-1)))*ones(M,N);
+
+m_conf(7,2) = -m_conf(7,2);
+% m_conf(6,2) = -m_conf(6,2);
+% m_conf(4,3) = -m_conf(4,3);
+% m_conf(2,4) = -m_conf(2,4);
+
+M = 4; N = 4;
+
+m_conf = diag(power(-1,0:(M-1)))*ones(M,N);
+fn_visualization(m_conf,2);
+m_conf(4,2) = -m_conf(4,2);
+% m_conf(3,3) = -m_conf(3,3);
+% m_conf(2,4) = -m_conf(2,4);
+% m_conf(6,2) = -m_conf(6,2);
+% m_conf(4,3) = -m_conf(4,3);
+% m_conf(2,4) = -m_conf(2,4);
+
+fn_visualization(m_conf,3);
+
+lieb = [5,6,7,8,1,2,3,4,0];
+fn_lieb_visualization({lieb},4);
+
+lieb1 = fn_lieb_add_base(lieb0,4)
+
+function fn_visualization(m_conf,plotnum)
+close(figure(plotnum));
+figure(plotnum);
+hold on;
+
+[M,N] = size(m_conf);
+figure(plotnum); axis([0,N+1,0,M+1]);
+for m = 1:M
+    for n = 1:N
+        
+        figure(plotnum);
+        
+        x0 = n;
+        y0 = M+1-m;
+        d1 = 1/4; d2 = 1/2;
+        x1 = x0 - d1; y1 = y0; v1 = [x1,y1];
+        x2 = x0; y2 = y0 + d1; v2 = [x2,y2];
+        x3 = x0 + d1; y3 = y0; v3 = [x3,y3];
+        x4 = x0; y4 = y0 - d1; v4 = [x4,y4];
+        x5 = x0 - d2; y5 = y0; v5 = [x5,y5];
+        x6 = x0; y6 = y0 + d2; v6 = [x6,y6];
+        x7 = x0 + d2; y7 = y0; v7 = [x7,y7];
+        x8 = x0; y8 = y0 - d2; v8 = [x8,y8];
+        
+        if m_conf(m,n) == -1
+            fn_point_plot(v5,v1,v2,v6);
+            fn_point_plot(v8,v4,v3,v7);
+        end
+        
+        if m_conf(m,n) == 1
+           fn_point_plot(v5,v1,v4,v8);
+           fn_point_plot(v6,v2,v3,v7);
+        end
+        
+        plot(x0,y0,'ro');
+        
+    end
+end
+
+end
+
+
+
+function fn_point_plot(v1,v2,v3,v4)
+
+x1 = v1(1); y1 = v1(2);
+x2 = v2(1); y2 = v2(2);
+x3 = v3(1); y3 = v3(2);
+x4 = v4(1); y4 = v4(2);
+
+plot([x1,x2],[y1,y2],'b','linewidth',3);
+plot([x2,x3],[y2,y3],'b','linewidth',3);
+plot([x3,x4],[y3,y4],'b','linewidth',3);
+
+end
+
+
+
+function fn_lieb_visualization(c_lieb,figure_number)
+close(figure(figure_number));
+figure(figure_number);
+hold on;
+
+M = length(c_lieb);
+N = (length(c_lieb{1})-1)/2;
+
+figure(figure_number);
+axis([0,N+1,0,M+2]);
+
+for y = 1:(M+1)
+    vx = linspace(0.5,(N+0.5),2);
+    vy = y*ones(1,2);
+    plot(vx,vy,'r--');
+    for x=1:N
+        figure(figure_number);
+        plot(x,y,'ro');
+    end
+end
+
+for n=1:N
+    x1 = n; y1 = 1;
+    x2 = n; y2 = 1/2;
+    plot([x1,x2],[y1,y2],'-b','linewidth',3);
+    x1 = n; y1 = M+1;
+    x2 = n; y2 = M+3/2;
+    plot([x1,x2],[y1,y2],'-b','linewidth',3);
+end
+
+for m=1:M
+    y_center = M + 3/2 - m;
+    lieb = c_lieb{m};
+    lieb = lieb(1:end-1);
+    v_judge = zeros(1,2*N);
+    point = 1;
+    while point<=2*N
+        if v_judge(point)==0
+            p1 = point;
+            p2 = lieb(p1);
+            v_judge(p1) = 1;
+            v_judge(p2) = 1;
+            
+            if p1<=N
+                x1 = p1;
+                y1 = y_center + 1/2;
+            else
+                x1 = p1 - N;
+                y1 = y_center - 1/2;
+            end
+            
+            if p2<=N
+                x2 = p2;
+                y2 = y_center + 1/2;
+            else
+                x2 = p2 - N;
+                y2 = y_center - 1/2;
+            end
+            
+            if (p1>N && p2<=N) || (p1<=N && p2>N)
+                plot([x1,x2],[y1,y2],'-b','linewidth',3);
+            elseif p1<=N
+                max_x = max(x1,x2);
+                min_x = min(x1,x2);
+                A = (max_x-min_x)/N*0.5;
+                num_x = 100;
+                vx = linspace(min_x,max_x,num_x);
+                vy = (y1+y2)/2 ...
+                    - A*sin((vx-min_x)./(max_x-min_x)*pi);
+                plot(vx,vy,'-b','linewidth',3);
+            else
+                max_x = max(x1,x2);
+                min_x = min(x1,x2);
+                A = (max_x-min_x)/N*0.5;
+                num_x = 100;
+                vx = linspace(min_x,max_x,num_x);
+                vy = (y1+y2)/2 ...
+                    + A*sin((vx-min_x)./(max_x-min_x)*pi);
+                plot(vx,vy,'-b','linewidth',3);
+            end
+        end
+        
+        point = point + 1;
+    end
+end
+
+end

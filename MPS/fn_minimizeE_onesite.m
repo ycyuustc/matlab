@@ -2,8 +2,8 @@ function [A,E]=fn_minimizeE_onesite(hsetj,Hleft,Hright)
 
 DAl=size(Hleft{1},1);
 DAr=size(Hright{1},1);
-% d=size(hsetj{1},1);
-d = 2;
+d=size(hsetj{1},3);
+% d = 2;
 M=size(hsetj,1);
 
 Heff=0;
